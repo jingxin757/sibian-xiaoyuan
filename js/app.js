@@ -99,6 +99,7 @@
       return;
     }
     var mod = MODULES[issue.module];
+    var mentor = MENTORS[issue.module] || MENTORS.xiaohe;
     setModule(issue.module);
     document.title = issue.title + " · " + mod.name + " · 思辨小院";
 
@@ -136,11 +137,16 @@
       '<section class="step"><h2 class="step-head"><span class="num">' + nums[2] + '</span>我的想法</h2>' +
         '<label class="save-state" for="ideaBox" style="display:block;margin-bottom:8px">写你心里真实的想法，说错了也没关系。</label>' +
         '<textarea class="idea-box" id="ideaBox" placeholder="我想说……"></textarea>' +
+        '<div class="mentor-teaser">' +
+          '<button class="btn-mentor" id="btnMentor" type="button" disabled><span class="m-avatar">' + mentor.glyph + '</span>问问' + mentor.name + '</button>' +
+          '<span class="mentor-note" id="mentorNote"></span>' +
+        '</div>' +
         '<div class="idea-foot">' +
           '<span class="save-state" id="saveState"></span>' +
           '<button class="btn-mom" id="btnMom" type="button">发给妈妈</button>' +
         '</div>' +
         '<p class="idea-tip" id="ideaTip"></p>' +
+        '<div class="mentor-panel" id="mentorPanel" hidden></div>' +
       '</section>' +
 
       '<section class="step"><h2 class="step-head"><span class="num">' + nums[3] + '</span>思辨小锦囊</h2>' +
@@ -152,6 +158,7 @@
       '</section>';
 
     bindIdeaBox(issue, mod);
+    bindMentor(issue, mod);
     bindReflect();
   }
 
@@ -282,6 +289,265 @@
         document.body.removeChild(ta);
       });
     }
+  }
+
+  /* ---------- AI 先生陪练（v2.2）：只追问、不打分，想法永远是孩子自己的 ----------
+     流程：孩子写满一句话 → 亮出「问问先生」→ 先生复述+追问+鼓励，最多聊 3 轮 →
+     先生收尾引导「发给妈妈」。反思区仍由发给妈妈解锁，先生只是路上的陪练。 */
+  var MENTORS = {
+    xiaohe: { name: "荷花姐姐", glyph: "荷", pron: "她" },
+    shaonian: { name: "问石先生", glyph: "问", pron: "他" }
+  };
+  var MENTOR_MAX_ROUNDS = 3;
+  /* 本地试跑开关：网址带 ?mentorMock=1 时不连后端（只用于开发验证） */
+  var MENTOR_MOCK = /mentorMock=1/.test(location.search);
+
+  function getMentor(issueId) {
+    try {
+      var raw = localStorage.getItem("sibian:mentor:" + issueId);
+      var st = raw ? JSON.parse(raw) : null;
+      if (st && Array.isArray(st.msgs)) return st;
+    } catch (e) { }
+    return { msgs: [], done: false };
+  }
+  function saveMentor(issueId, st) {
+    try { localStorage.setItem("sibian:mentor:" + issueId, JSON.stringify(st)); } catch (e) { }
+  }
+
+  /* 平台接口有 CSRF 双提交校验：从 cookie 取 suda-csrf-token，请求时放同名头 */
+  function csrfToken() {
+    var m = document.cookie.match(/(?:^|;\s*)suda-csrf-token=([^;]+)/);
+    return m ? decodeURIComponent(m[1]) : "";
+  }
+
+  /* 调后端接口：页面挂在 /app/<id>/ 下，接口一般同目录；个别环境在根路径，404 自动换一个 */
+  function apiPost(path, body) {
+    if (MENTOR_MOCK) {
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          resolve(path.indexOf("mentor-tts") >= 0
+            ? { audioUrl: "" }
+            : { reply: "（本地试跑·没连后端）你是说……，对吗？那为什么呢？能举个例子吗？你有自己的想法，这很棒。", roundsLeft: 1 });
+        }, 500);
+      });
+    }
+    var rel = (function () {
+      /* 页面地址是 /app/<app_id>（末尾无斜杠、hash 路由），接口同目录：
+         只有以 .html 结尾才剥掉文件名，其余情况补上结尾斜杠 */
+      var p = location.pathname;
+      if (/\.html?$/.test(p)) p = p.replace(/[^/]*$/, "");
+      else if (p.slice(-1) !== "/") p += "/";
+      return p;
+    })();
+    var saved = null;
+    try { saved = localStorage.getItem("sibian:apibase"); } catch (e) { }
+    var order = saved === "root" ? ["/", rel] : [rel, "/"];
+    var i = 0;
+    function attempt() {
+      if (i >= order.length) return Promise.reject(new Error("网络不太好，稍后再试一次"));
+      var base = order[i++];
+      return fetch(base + path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-suda-csrf-token": csrfToken() },
+        body: JSON.stringify(body)
+      }).then(function (res) {
+        return res.json().catch(function () { return null; }).then(function (data) {
+          if (!res.ok) {
+            if (res.status === 404) return attempt();  /* 地址不对，换下一个 */
+            throw new Error((data && data.error && data.error.message) || "请求没成功，稍后再试");
+          }
+          if (!data) return attempt();                 /* 拿到的不是接口响应，换下一个 */
+          try { localStorage.setItem("sibian:apibase", base === "/" ? "root" : "rel"); } catch (e) { }
+          return data;
+        });
+      }).catch(function (err) {
+        if (err instanceof TypeError) return attempt(); /* 断网类错误，换下一个试试 */
+        throw err;
+      });
+    }
+    return attempt();
+  }
+
+  function bindMentor(issue, mod) {
+    var btn = document.getElementById("btnMentor");
+    var note = document.getElementById("mentorNote");
+    var panel = document.getElementById("mentorPanel");
+    var ideaBox = document.getElementById("ideaBox");
+    if (!btn || !panel || !ideaBox) return;
+    var meta = MENTORS[issue.module] || MENTORS.xiaohe;
+    var state = getMentor(issue.id);
+    var busy = false;
+    var currentAudio = null;
+    var ttsUrls = {};   /* 第几条 AI 回复 -> 朗读地址（地址会过期，不存 localStorage） */
+
+    function aiCount() {
+      var n = 0;
+      for (var k = 0; k < state.msgs.length; k++) if (state.msgs[k].r === "ai") n++;
+      return n;
+    }
+    function ideaReady() { return ideaBox.value.trim().length >= 8; }
+
+    function refreshTeaser() {
+      if (state.done) {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="m-avatar">' + meta.glyph + '</span>回看和' + meta.name + '的对话';
+        note.textContent = "这期的陪练聊完啦，把想法发给妈妈吧。";
+        return;
+      }
+      if (state.msgs.length) {
+        btn.disabled = false;
+        btn.innerHTML = '<span class="m-avatar">' + meta.glyph + '</span>和' + meta.name + '接着聊';
+        note.textContent = "";
+        return;
+      }
+      var ok = ideaReady();
+      btn.disabled = !ok;
+      btn.innerHTML = '<span class="m-avatar">' + meta.glyph + '</span>问问' + meta.name;
+      note.textContent = ok
+        ? "想法写好了，" + meta.name + "来陪你聊几句"
+        : "先写下一句完整的想法，" + meta.name + "才开口（" + meta.pron + "只追问，不打分）";
+    }
+
+    function msgHtml(m, idx) {
+      if (m.r === "sys") return '<div class="mm sys">' + escapeHtml(m.t) + '</div>';
+      if (m.r === "child") {
+        return '<div class="mm me' + (m.idea ? " mm-idea" : "") + '">' +
+          (m.idea ? '<span class="mm-tag">我的想法</span>' : "") + escapeHtml(m.t) + '</div>';
+      }
+      return '<div class="mm ai">' +
+        '<div class="mm-row"><span class="m-avatar sm">' + meta.glyph + '</span>' +
+        '<div class="mm-bubble">' + escapeHtml(m.t) + '</div></div>' +
+        '<button class="mm-tts" type="button" data-tts="' + idx + '" title="听' + meta.name + '说说">🔊</button>' +
+      '</div>';
+    }
+    function typingHtml() {
+      return '<div class="mm ai"><div class="mm-row"><span class="m-avatar sm">' + meta.glyph + '</span>' +
+        '<div class="mm-bubble typing">' + meta.name + '正在想<span class="dots"><i>·</i><i>·</i><i>·</i></span></div></div></div>';
+    }
+
+    function renderPanel() {
+      panel.hidden = false;
+      var msgsHtml = state.msgs.map(msgHtml).join("") + (busy ? typingHtml() : "");
+      var footRow = state.done
+        ? '<div class="mentor-done">这几轮聊得真好。把打磨好的想法<button type="button" class="mentor-to-mom" id="mentorToMom">发给妈妈</button>吧。</div>'
+        : '<div class="mentor-input"><input id="mentorInput" type="text" maxlength="200" placeholder="接着对' + meta.name + '说……"><button type="button" id="mentorSend">说</button></div>';
+      panel.innerHTML =
+        '<div class="mentor-head">' +
+          '<span class="m-avatar big">' + meta.glyph + '</span>' +
+          '<div class="mentor-title"><b>' + meta.name + '</b><span>只追问 · 不打分 · 想法是你自己的</span></div>' +
+        '</div>' +
+        '<div class="mentor-msgs" id="mentorMsgs">' + msgsHtml + '</div>' +
+        footRow;
+      wirePanel();
+      var box = document.getElementById("mentorMsgs");
+      if (box) box.scrollTop = box.scrollHeight;
+    }
+
+    function wirePanel() {
+      var sendBtn = document.getElementById("mentorSend");
+      var input = document.getElementById("mentorInput");
+      if (sendBtn && input) {
+        sendBtn.addEventListener("click", function () { doSend(input.value); });
+        input.addEventListener("keydown", function (e) {
+          if (e.key === "Enter") { e.preventDefault(); doSend(input.value); }
+        });
+        input.focus();
+      }
+      var toMom = document.getElementById("mentorToMom");
+      if (toMom) toMom.addEventListener("click", function () {
+        var btnMom = document.getElementById("btnMom");
+        if (btnMom) btnMom.click();
+        var foot = document.querySelector(".idea-foot");
+        if (foot && foot.scrollIntoView) {
+          try { foot.scrollIntoView({ behavior: "smooth" }); } catch (e) { foot.scrollIntoView(); }
+        }
+      });
+      Array.prototype.forEach.call(panel.querySelectorAll(".mm-tts"), function (b) {
+        b.addEventListener("click", function () { playTts(parseInt(b.getAttribute("data-tts"), 10), b); });
+      });
+    }
+
+    function doSend(text) {
+      text = (text || "").trim();
+      if (!text || busy || state.done) return;
+      state.msgs.push({ r: "child", t: text });
+      saveMentor(issue.id, state);
+      renderPanel();
+      ask();
+    }
+
+    function ask() {
+      busy = true;
+      renderPanel();
+      var history = state.msgs.map(function (m) {
+        return { role: m.r === "child" ? "child" : "mentor", text: m.t };
+      });
+      apiPost("api/ai/mentor-chat", {
+        yard: issue.module,
+        title: issue.title,
+        questions: issue.questions,
+        idea: ideaBox.value.trim(),
+        history: history
+      }).then(function (res) {
+        busy = false;
+        state.msgs.push({ r: "ai", t: (res && res.reply) || "……" });
+        if (aiCount() >= MENTOR_MAX_ROUNDS) state.done = true;
+        saveMentor(issue.id, state);
+        renderPanel();
+        refreshTeaser();
+      }).catch(function (err) {
+        busy = false;
+        state.msgs.push({ r: "sys", t: (err && err.message) || "网络不太好，稍后再试" });
+        saveMentor(issue.id, state);
+        renderPanel();
+      });
+    }
+
+    function playTts(idx, btnEl) {
+      var text = state.msgs[idx] && state.msgs[idx].t;
+      if (!text) return;
+      if (currentAudio) { try { currentAudio.pause(); } catch (e) { } currentAudio = null; }
+      if (ttsUrls[idx]) {
+        currentAudio = new Audio(ttsUrls[idx]);
+        currentAudio.play().catch(function () { });
+        return;
+      }
+      btnEl.textContent = "⏳";
+      apiPost("api/ai/mentor-tts", { yard: issue.module, text: text }).then(function (res) {
+        btnEl.textContent = "🔊";
+        if (!res || !res.audioUrl) return;
+        ttsUrls[idx] = res.audioUrl;
+        currentAudio = new Audio(res.audioUrl);
+        currentAudio.play().catch(function () { });
+      }).catch(function () {
+        btnEl.textContent = "🔇";
+        setTimeout(function () { btnEl.textContent = "🔊"; }, 1600);
+      });
+    }
+
+    btn.addEventListener("click", function () {
+      if (panel.hidden) {
+        if (!state.msgs.length) {
+          var idea = ideaBox.value.trim();
+          if (!idea) return;
+          /* 第一次：把「我的想法」作为开场白发给先生 */
+          state.msgs.push({ r: "child", t: idea, idea: true });
+          saveMentor(issue.id, state);
+          renderPanel();
+          ask();
+        } else {
+          renderPanel();
+        }
+        try { panel.scrollIntoView({ behavior: "smooth", block: "nearest" }); } catch (e) { }
+        return;
+      }
+      var input = document.getElementById("mentorInput");
+      if (input) input.focus();
+    });
+
+    ideaBox.addEventListener("input", refreshTeaser);
+    refreshTeaser();
+    if (state.msgs.length) renderPanel();   /* 上次聊到一半，回来接着看 */
   }
 
   /* ---------- 视图：思辨方法屋 ---------- */

@@ -1,0 +1,54 @@
+{
+  "id": "sibian-mentor-chat",
+  "pluginKey": "@official-plugins/ai-text-generate",
+  "pluginVersion": "1.0.21",
+  "name": "思辨小院·AI先生追问陪练",
+  "description": "孩子写下想法后，AI 以固定三段式（复述+追问+鼓励）陪练，不判对错不给答案；人设与收尾指令由服务端按院别注入",
+  "paramsSchema": {
+    "type": "object",
+    "properties": {
+      "persona_block": {
+        "type": "string",
+        "description": "人设与语气规则（小荷院荷花姐姐/少年院问石先生，服务端注入）"
+      },
+      "story_title": {
+        "type": "string",
+        "description": "本期的故事标题"
+      },
+      "questions_block": {
+        "type": "string",
+        "description": "本期题目与思路路标，编号文本"
+      },
+      "child_idea": {
+        "type": "string",
+        "description": "孩子在“我的想法”里写下的内容"
+      },
+      "history_block": {
+        "type": "string",
+        "description": "此前的对话记录，首轮为“（还没有聊过）”"
+      },
+      "final_note": {
+        "type": "string",
+        "description": "轮次指令：最后一轮传收尾话术（不再提问、引导发妈妈），其余轮传常规追问提示（不能传空字符串，平台拒绝空值必填参数）"
+      }
+    },
+    "required": [
+      "persona_block",
+      "story_title",
+      "questions_block",
+      "child_idea",
+      "history_block",
+      "final_note"
+    ]
+  },
+  "formValue": {
+    "modelID": "2015",
+    "modelParams": {
+      "temperature": 0.5,
+      "maxTokens": 8192
+    },
+    "prompt": "你是「思辨小院」里的思考陪练，正在陪一个孩子练习表达想法。这里没有标准答案。\n\n【你的人设】\n{{input.persona_block}}\n\n【孩子刚读完的故事】《{{input.story_title}}》\n\n【这一期的练习题和思路路标（供你参考，孩子已经看过题目）】\n{{input.questions_block}}\n\n【孩子写下的想法】\n{{input.child_idea}}\n\n【刚才的对话】\n{{input.history_block}}\n\n【你要做的事】\n写一段回复给这个孩子，只包含三部分：\n1. 用一句话复述孩子的观点或回答——必须紧贴他刚说的原话、用他自己的词，不要添加故事里或他没提过的情节（让他知道你听懂了）；\n2. 问一个开放式追问，帮他把想法再往前推一步（方向可以参考上面的思路路标，但要像聊天一样说出来，不要照搬原句，一次只问一个）；\n3. 用一句话鼓励他的思考过程（夸他肯想、敢说、有理由，不许夸“答对了”）。\n\n【铁律】\n- 不评判对错：永远不说“对、错、正确、不正确、标准答案”这类词；\n- 不给出你自己的答案或立场，只提问和鼓励；\n- 只聊和这个练习有关的话题，孩子跑题就温柔地拉回来；\n- 用中文口语，像面对面说话，不要用列表、小标题、序号；\n- 回复长度严格遵守人设要求；\n{{input.final_note}}"
+  },
+  "createdAt": 1788509215896,
+  "updatedAt": 1788513000000
+}

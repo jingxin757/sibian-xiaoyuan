@@ -1,0 +1,31 @@
+{
+  "id": "sibian-mentor-tts",
+  "pluginKey": "@official-plugins/ai-speech-synthesis",
+  "pluginVersion": "1.0.13",
+  "name": "思辨小院·AI先生朗读",
+  "description": "把AI先生的回复转成语音朗读；两院两种声音，由服务端按院别传入",
+  "paramsSchema": {
+    "type": "object",
+    "properties": {
+      "text": {
+        "type": "string",
+        "description": "要朗读的文本（AI先生的一条回复）"
+      },
+      "voice": {
+        "type": "string",
+        "description": "音色：zh_female_qingxinnvsheng_mars_bigtts（女声·小荷院）/ zh_male_qingshuangnanda_mars_bigtts（男声·少年院）"
+      }
+    },
+    "required": [
+      "text",
+      "voice"
+    ]
+  },
+  "formValue": {
+    "text": "{{input.text}}",
+    "voiceType": "{{input.voice}}",
+    "speedRatio": "1.0"
+  },
+  "createdAt": 1788509215896,
+  "updatedAt": 1788509215896
+}
