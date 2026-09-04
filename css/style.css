@@ -1,0 +1,400 @@
+/* ============================================================
+   思辨小院 · 样式
+   意象：院子 —— 纸白的墙、荷绿的院、黛蓝的山、柿子橙的灯
+   字体分三个声部：
+     楷体 = 先生的声音（标题 / 问题 / 锦囊）
+     宋体 = 印刷的世界（读一读的材料）
+     黑体 = 界面（按钮 / 标签 / 导航）
+   ============================================================ */
+
+:root {
+  --paper: #FBF5E9;        /* 纸：暖白纸色，页面底 */
+  --paper-deep: #F4EBD8;   /* 纸·深：卡片底、分区 */
+  --line: #E4D9C0;         /* 细线 */
+  --ink: #31392F;          /* 墨：暖绿黑，正文 */
+  --ink-soft: #6D7462;     /* 墨·浅：次要文字 */
+
+  --lotus: #4F8A68;        /* 荷绿：小荷院 */
+  --lotus-deep: #41775A;
+  --lotus-tint: #EBF2EA;
+
+  --indigo: #40607F;       /* 黛蓝：少年院 */
+  --indigo-deep: #35526D;
+  --indigo-tint: #E9EFF5;
+
+  --persimmon: #D96C34;    /* 柿橙：行动按钮 */
+  --persimmon-deep: #C25B27;
+  --persimmon-tint: #FBEADF;
+
+  --seal: #B5442C;         /* 印章红 */
+  --night-top: #33485E;    /* 月洞门里的傍晚天空 */
+  --night-bottom: #22354A;
+  --moonlight: #F7EFD9;    /* 门里的月光色文字 */
+
+  --font-display: "Kaiti SC", "STKaiti", KaiTi, "Noto Serif SC", "Songti SC", serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-read: "Songti SC", STSong, SimSun, "Noto Serif SC", serif;
+
+  --radius: 14px;
+  --shadow: 0 2px 10px rgba(49, 57, 47, 0.07);
+  --accent: var(--lotus);          /* 各页面/模块可覆盖 */
+  --accent-deep: var(--lotus-deep);
+  --accent-tint: var(--lotus-tint);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font-body);
+  font-size: 17px;
+  line-height: 1.85;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+/* 每个模块换主色 */
+body[data-module="xiaohe"]   { --accent: var(--lotus);   --accent-deep: var(--lotus-deep);   --accent-tint: var(--lotus-tint); }
+body[data-module="shaonian"] { --accent: var(--indigo);  --accent-deep: var(--indigo-deep);  --accent-tint: var(--indigo-tint); }
+
+a { color: var(--accent-deep); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+
+.page { max-width: 680px; margin: 0 auto; padding: 0 20px 56px; }
+
+/* ---------- 页头 ---------- */
+.site-head {
+  display: flex; align-items: center; gap: 12px;
+  padding: 22px 0 6px;
+}
+.site-head .home-link { display: flex; align-items: center; gap: 12px; color: var(--ink); }
+.site-head .home-link:hover { text-decoration: none; }
+.site-name { font-family: var(--font-display); font-size: 24px; letter-spacing: 2px; }
+.site-head nav { margin-left: auto; font-size: 15px; }
+.site-head nav a { margin-left: 16px; color: var(--ink-soft); }
+.site-head nav a:hover { color: var(--ink); }
+
+/* 印章 logo：思辨 / 小院 */
+.seal {
+  display: grid; grid-template-columns: 1fr 1fr;
+  width: 36px; height: 36px; padding: 3px; gap: 1px;
+  background: var(--seal); border-radius: 5px;
+  font-family: var(--font-display); font-size: 12px; line-height: 1.15;
+  color: #FBF5E9; text-align: center; align-content: center;
+  box-shadow: inset 0 0 0 1.5px rgba(251, 245, 233, 0.35);
+  user-select: none;
+}
+
+/* ---------- 首页 · 月洞门（签名元素） ---------- */
+.gate-wrap { text-align: center; padding: 30px 0 8px; }
+.moon-gate {
+  display: flex; flex-direction: column; justify-content: center; align-items: center;
+  width: min(80vw, 330px); aspect-ratio: 1 / 1; margin: 0 auto;
+  border-radius: 50%;
+  background: linear-gradient(175deg, var(--night-top), var(--night-bottom));
+  box-shadow:
+    0 0 0 10px var(--paper),
+    0 0 0 11.5px var(--line),
+    0 10px 30px rgba(34, 53, 74, 0.25);
+  color: var(--moonlight);
+  padding: 44px 40px;
+  position: relative;
+  animation: gate-in 0.9s ease-out both;
+}
+/* 门里的几颗小星星 */
+.moon-gate::before {
+  content: ""; position: absolute; inset: 0; border-radius: 50%;
+  background:
+    radial-gradient(1.5px 1.5px at 24% 22%, rgba(247, 239, 217, 0.9) 50%, transparent 51%),
+    radial-gradient(1px 1px at 74% 15%, rgba(247, 239, 217, 0.7) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 82% 62%, rgba(247, 239, 217, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 18% 66%, rgba(247, 239, 217, 0.5) 50%, transparent 51%);
+  pointer-events: none;
+}
+.gate-label {
+  font-size: 14px; letter-spacing: 5px; text-indent: 5px;
+  color: rgba(247, 239, 217, 0.72); margin-bottom: 14px;
+}
+.gate-question {
+  font-family: var(--font-display);
+  font-size: 24px; line-height: 1.7; letter-spacing: 1px;
+}
+.gate-date { margin-top: 16px; font-size: 13px; color: rgba(247, 239, 217, 0.55); letter-spacing: 2px; }
+.gate-note { margin-top: 20px; font-size: 14px; color: var(--ink-soft); }
+
+@keyframes gate-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------- 首页 · 两个院门 ---------- */
+.doors { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 34px; }
+.door {
+  display: block; position: relative;
+  background: #FFFDF7; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 20px 20px 18px 24px; color: var(--ink);
+}
+.door:hover { text-decoration: none; transform: translateY(-2px); transition: transform 0.15s ease; }
+.door::before {
+  content: ""; position: absolute; left: 0; top: 14px; bottom: 14px;
+  width: 5px; border-radius: 0 4px 4px 0; background: var(--door-color, var(--lotus));
+}
+.door-top { display: flex; align-items: baseline; gap: 10px; }
+.door-name { font-family: var(--font-display); font-size: 25px; letter-spacing: 2px; color: var(--door-color, var(--lotus)); }
+.door-grade { font-size: 14px; color: var(--ink-soft); }
+.door-desc { font-size: 15px; color: var(--ink-soft); margin-top: 4px; }
+.door-latest {
+  margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line);
+  font-size: 15px; display: flex; align-items: baseline; gap: 6px;
+}
+.door-latest .t { color: var(--ink-soft); flex-shrink: 0; }
+.door-latest .go { color: var(--door-color, var(--lotus)); margin-left: auto; flex-shrink: 0; }
+
+/* ---------- 模块列表页 ---------- */
+.mod-head { padding: 26px 0 8px; }
+.crumb { font-size: 14px; color: var(--ink-soft); display: inline-block; margin-bottom: 10px; }
+.mod-title { font-family: var(--font-display); font-size: 34px; letter-spacing: 3px; color: var(--accent-deep); }
+.mod-sub { margin-top: 6px; color: var(--ink-soft); font-size: 15px; }
+.mod-motto { margin-top: 10px; font-family: var(--font-display); font-size: 19px; color: var(--ink); }
+
+.issue-list { margin-top: 26px; display: grid; gap: 14px; }
+.issue-card {
+  display: block; background: #FFFDF7; border: 1px solid var(--line);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 18px 20px; color: var(--ink);
+}
+.issue-card:hover { text-decoration: none; border-color: var(--accent); }
+.issue-no { font-size: 13px; letter-spacing: 2px; color: var(--accent-deep); }
+.issue-title { font-family: var(--font-display); font-size: 22px; margin: 2px 0 4px; }
+.issue-intro { font-size: 15px; color: var(--ink-soft); }
+.issue-meta { display: flex; gap: 10px; align-items: center; margin-top: 10px; font-size: 13px; color: var(--ink-soft); }
+.written {
+  display: inline-flex; align-items: center; gap: 4px;
+  background: var(--accent-tint); color: var(--accent-deep);
+  border-radius: 999px; padding: 2px 10px; font-size: 12.5px;
+}
+.empty-note { text-align: center; color: var(--ink-soft); font-size: 15px; padding: 30px 0; }
+
+/* ---------- 期详情页 ---------- */
+.art-head { padding: 26px 0 4px; }
+.art-eyebrow { font-size: 14px; letter-spacing: 2px; color: var(--accent-deep); }
+.art-title { font-family: var(--font-display); font-size: 33px; line-height: 1.4; margin: 6px 0 2px; }
+.art-source { font-size: 13.5px; color: var(--ink-soft); }
+
+.step { margin-top: 34px; }
+.step-head {
+  display: flex; align-items: baseline; gap: 10px;
+  font-family: var(--font-display); font-size: 22px; letter-spacing: 2px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 16px;
+}
+.step-head .num { color: var(--accent-deep); }
+
+/* ① 读一读：印刷的世界 */
+.reading {
+  background: #FFFDF7; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 22px 22px;
+}
+.reading p {
+  font-family: var(--font-read); font-size: 18px; line-height: 2; margin-bottom: 0.9em;
+}
+.reading p:last-child { margin-bottom: 0; }
+/* 小荷院给三年级：字号再大一点 */
+body[data-module="xiaohe"] .reading p { font-size: 19.5px; }
+.photo-link {
+  display: inline-flex; align-items: center; gap: 8px;
+  margin-top: 14px; font-size: 15px; color: var(--accent-deep);
+  border: 1px solid var(--line); background: var(--paper);
+  border-radius: 999px; padding: 6px 16px;
+}
+.photo-link:hover { border-color: var(--accent); text-decoration: none; }
+
+/* ② 想一想：题目逐个展开 */
+.qa { display: grid; gap: 12px; }
+details.q {
+  background: #FFFDF7; border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 0 18px; box-shadow: var(--shadow);
+}
+details.q[open] { border-color: var(--accent); }
+details.q summary {
+  cursor: pointer; list-style: none;
+  padding: 15px 30px 15px 0; position: relative;
+  font-family: var(--font-display); font-size: 19px; line-height: 1.75;
+}
+details.q summary::-webkit-details-marker { display: none; }
+details.q summary::after {
+  content: ""; position: absolute; right: 6px; top: 24px;
+  width: 8px; height: 8px; border-right: 2px solid var(--accent); border-bottom: 2px solid var(--accent);
+  transform: rotate(45deg); transition: transform 0.18s ease;
+}
+details.q[open] summary::after { transform: rotate(225deg); top: 26px; }
+.q-no {
+  display: inline-flex; width: 26px; height: 26px; margin-right: 8px;
+  align-items: center; justify-content: center; flex-shrink: 0; vertical-align: -6px;
+  background: var(--accent-tint); color: var(--accent-deep);
+  border-radius: 50%; font-family: var(--font-body); font-size: 14px;
+}
+.q-hint {
+  padding: 0 0 16px 34px; color: var(--ink-soft); font-size: 15px;
+}
+.q-hint b { color: var(--accent-deep); font-weight: 600; }
+
+/* ③ 我的想法 */
+.idea-box {
+  width: 100%; min-height: 170px; resize: vertical;
+  font-family: var(--font-body); font-size: 16.5px; line-height: 1.9; color: var(--ink);
+  background: #FFFDF7; border: 1.5px solid var(--line); border-radius: var(--radius);
+  padding: 16px 18px;
+}
+.idea-box:focus { outline: none; border-color: var(--accent); }
+.idea-foot { display: flex; align-items: center; gap: 12px; margin-top: 12px; flex-wrap: wrap; }
+.save-state { font-size: 13.5px; color: var(--ink-soft); }
+.btn-mom {
+  appearance: none; border: none; cursor: pointer;
+  min-height: 46px; padding: 0 26px; border-radius: 999px;
+  background: var(--persimmon); color: #FFFDF7;
+  font-family: var(--font-body); font-size: 16.5px; letter-spacing: 1px;
+  box-shadow: 0 3px 10px rgba(217, 108, 52, 0.35);
+  margin-left: auto;
+}
+.btn-mom:hover { background: var(--persimmon-deep); }
+.btn-mom:active { transform: translateY(1px); }
+.btn-mom.done { background: var(--lotus); box-shadow: 0 3px 10px rgba(79, 138, 104, 0.3); }
+.idea-tip { font-size: 13.5px; color: var(--seal); margin-top: 8px; min-height: 1.5em; }
+
+/* ④ 思辨小锦囊 */
+.tip-card {
+  background: var(--accent-tint); border-radius: var(--radius);
+  padding: 20px 22px; font-family: var(--font-display);
+  font-size: 18.5px; line-height: 1.95; color: var(--ink);
+}
+.tip-card .tip-tag {
+  display: inline-block; font-size: 13px; font-family: var(--font-body);
+  color: var(--accent-deep); letter-spacing: 3px; margin-bottom: 8px;
+}
+
+/* ② 想一想 · 思路路标（答前给方向，不给答案） */
+.guide-list {
+  list-style: none; margin: 0 0 16px; padding: 12px 14px 12px 34px;
+  background: var(--paper-deep); border-radius: 10px;
+  font-size: 15px; line-height: 1.9; color: var(--ink);
+}
+.guide-list .guide-title {
+  font-family: var(--font-display); font-size: 14px; letter-spacing: 3px;
+  color: var(--accent-deep); margin-bottom: 2px;
+}
+.guide-list li:not(.guide-title) { position: relative; padding-left: 18px; }
+.guide-list li:not(.guide-title)::before {
+  content: "›"; position: absolute; left: 0; top: -1px;
+  color: var(--accent); font-weight: 700;
+}
+
+/* ⑤ 反思区：发给妈妈后解锁 */
+.reflect-locked {
+  padding: 18px 20px; text-align: center;
+  background: var(--paper-deep); border: 1px dashed var(--line); border-radius: var(--radius);
+  color: var(--ink-soft); font-size: 15px; letter-spacing: 1px;
+}
+.reflect-card {
+  background: #FFFDF7; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 18px 20px;
+}
+.reflect-head { font-size: 15px; color: var(--ink-soft); margin-bottom: 10px; }
+.check-list { list-style: none; display: grid; gap: 8px; }
+.check-item {
+  cursor: pointer; user-select: none;
+  padding: 10px 14px; border-radius: 10px;
+  background: var(--paper-deep); font-size: 16px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.check-item::before { content: "☐ "; color: var(--accent-deep); }
+.check-item:hover { background: var(--accent-tint); }
+.check-item.checked { background: var(--accent-tint); color: var(--accent-deep); }
+.check-item.checked::before { content: "☑ "; }
+
+/* 多一个角度：另一扇窗 */
+.angle-card { margin-top: 14px; padding: 18px 20px; background: var(--accent-tint); border-radius: var(--radius); }
+.angle-head {
+  font-family: var(--font-display); font-size: 17px; letter-spacing: 2px;
+  color: var(--accent-deep); margin-bottom: 8px;
+}
+.angle-list { list-style: none; display: grid; gap: 10px; }
+.angle-list li {
+  position: relative; padding-left: 20px;
+  font-family: var(--font-display); font-size: 16.5px; line-height: 1.85;
+}
+.angle-list li::before {
+  content: ""; position: absolute; left: 2px; top: 12px;
+  width: 7px; height: 7px; border-radius: 50%;
+  border: 1.5px solid var(--accent);
+}
+.angle-note {
+  margin-top: 12px; font-size: 13px; color: var(--ink-soft);
+  letter-spacing: 1px; text-align: right; font-family: var(--font-display);
+}
+
+/* 作者的真结局（猜结局期专用，随反思区解锁） */
+.ending-card {
+  margin-top: 14px; padding: 18px 20px;
+  background: #FFFDF7; border: 1.5px dashed var(--accent); border-radius: var(--radius);
+}
+.ending-head {
+  font-family: var(--font-display); font-size: 17px; letter-spacing: 2px;
+  color: var(--seal); margin-bottom: 8px;
+}
+.ending-card p:not(.ending-head):not(.ending-note) {
+  font-family: var(--font-display); font-size: 16.5px; line-height: 1.85; margin-bottom: 0.6em;
+}
+.ending-card p:not(.ending-head):not(.ending-note):last-of-type { margin-bottom: 0; }
+.ending-note {
+  margin-top: 12px; font-size: 13px; color: var(--ink-soft);
+  letter-spacing: 1px; font-family: var(--font-display);
+}
+
+/* ---------- 思辨方法屋 ---------- */
+.m-grid { display: grid; grid-template-columns: 1fr; gap: 16px; margin-top: 26px; }
+.m-card {
+  background: #FFFDF7; border: 1px solid var(--line); border-radius: var(--radius);
+  box-shadow: var(--shadow); padding: 20px;
+}
+.m-head { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.m-char {
+  display: flex; align-items: center; justify-content: center;
+  width: 44px; height: 44px; flex-shrink: 0;
+  background: var(--seal); color: #FBF5E9; border-radius: 6px;
+  font-family: var(--font-display); font-size: 24px;
+  box-shadow: inset 0 0 0 1.5px rgba(251, 245, 233, 0.35);
+}
+.m-title { font-family: var(--font-display); font-size: 21px; letter-spacing: 1px; }
+.m-body { font-size: 15.5px; }
+.m-body .eg { display: block; margin-top: 6px; color: var(--ink-soft); font-size: 14.5px; }
+.m-when {
+  margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line);
+  font-size: 14px; color: var(--accent-deep);
+}
+
+/* ---------- 页脚 ---------- */
+.site-foot {
+  margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--line);
+  text-align: center;
+}
+.foot-motto { font-family: var(--font-display); font-size: 19px; letter-spacing: 3px; color: var(--ink-soft); }
+.foot-note { margin-top: 6px; font-size: 12.5px; color: var(--ink-soft); opacity: 0.9; }
+
+/* ---------- 平板与桌面 ---------- */
+@media (min-width: 640px) {
+  .doors { grid-template-columns: 1fr 1fr; }
+  .m-grid { grid-template-columns: 1fr 1fr; }
+  .moon-gate { padding: 52px 48px; }
+  .gate-question { font-size: 26px; }
+}
+
+/* ---------- 动效关闭（尊重系统设置） ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .moon-gate { animation: none; }
+  .door:hover { transform: none; }
+  details.q summary::after { transition: none; }
+}
